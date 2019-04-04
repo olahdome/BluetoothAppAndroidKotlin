@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MyBluetoothApp</string>
+    <string name="refresh">Refresh</string>
+    <string name="control_et_hint">Write something to send</string>
+    <string name="control_send_button_text">send</string>
+    <string name="control_disconnect_butt_text">disconnect</string>
+</resources>
