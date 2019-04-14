@@ -27,11 +27,6 @@ import android.widget.EditText
 class ControlActivity: AppCompatActivity() {
 
     companion object {
-        var m_myUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-        var m_bluetoothSocket: BluetoothSocket? = null
-        lateinit var m_progress: ProgressDialog
-        lateinit var m_bluetoothAdapter: BluetoothAdapter
-        var m_isConnected: Boolean = false
         lateinit var m_address: String
         var m_bluetoothService: BluetoothService? = null
     }
@@ -46,11 +41,11 @@ class ControlActivity: AppCompatActivity() {
             setupBluetooth()
         }
 
-        ConnectToDevice(this).execute()
+        m_bluetoothService?.ConnectToDevice(this, m_address)?.execute()
 
-        control_led_on.setOnClickListener { sendCommand("a") }
-        control_led_off.setOnClickListener { sendCommand("b") }
-        control_led_disconnect.setOnClickListener { disconnect() }
+        //control_led_on.setOnClickListener { sendCommand("a") }
+        //control_led_off.setOnClickListener { sendCommand("b") }
+        control_led_disconnect.setOnClickListener { m_bluetoothService?.disconnect() }
     }
 
     override fun onDestroy() {
@@ -60,6 +55,8 @@ class ControlActivity: AppCompatActivity() {
             m_bluetoothService!!.stop()
         }
 
+        m_bluetoothService?.disconnect()
+        finish()
     }
 
     fun setupBluetooth(){
@@ -81,7 +78,7 @@ class ControlActivity: AppCompatActivity() {
         }
     }*/
 
-    private fun sendCommand(input: String) {
+    /*private fun sendCommand(input: String) {
         if (m_bluetoothSocket != null) {
             try{
                 m_bluetoothSocket?.outputStream?.write(input.toByteArray())
@@ -89,59 +86,7 @@ class ControlActivity: AppCompatActivity() {
                 e.printStackTrace()
             }
         }
-    }
-
-    private fun disconnect() {
-        if (m_bluetoothSocket != null) {
-            try {
-                m_bluetoothSocket?.close()
-                m_bluetoothSocket = null
-                m_isConnected = false
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
-        finish()
-    }
-
-    private class ConnectToDevice(val c:Context) : AsyncTask<Void, Void, String>() {
-        private var connectSuccess: Boolean = true
-
-        override fun onPreExecute() {
-            super.onPreExecute()
-            m_progress = ProgressDialog.show(c, "Connecting...", "please wait")
-        }
-
-        override fun doInBackground(vararg p0: Void?): String? {
-            try {
-                if (m_bluetoothSocket == null || !m_isConnected) {
-                    m_bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-                    val device = m_bluetoothAdapter.getRemoteDevice(m_address)
-                    m_bluetoothSocket = device.createInsecureRfcommSocketToServiceRecord(m_myUUID)
-                    m_bluetoothAdapter.cancelDiscovery()
-                    m_bluetoothSocket?.connect()
-                }
-            } catch (e: IOException) {
-                m_bluetoothSocket?.close()
-                connectSuccess = false
-                e.printStackTrace()
-            }
-
-            m_bluetoothService?.connected(m_bluetoothSocket!!)
-
-            return null
-        }
-
-        override fun onPostExecute(result: String?) {
-            super.onPostExecute(result)
-            if (!connectSuccess) {
-                Log.i("data", "couldn't connect")
-            } else {
-                m_isConnected = true
-            }
-            m_progress.dismiss()
-        }
-    }
+    }*/
 
     private val m_handler = object : Handler() {
         override fun handleMessage(msg: Message) {

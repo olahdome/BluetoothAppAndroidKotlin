@@ -16,7 +16,11 @@ import android.R.string.cancel
 import android.bluetooth.BluetoothDevice
 import android.media.session.PlaybackState.STATE_NONE
 import android.R.string.cancel
-
+import android.app.ProgressDialog
+import android.bluetooth.BluetoothAdapter
+import android.content.Context
+import android.os.AsyncTask
+import java.util.*
 
 
 private const val TAG = "MY_APP_DEBUG_TAG"
@@ -28,12 +32,68 @@ class BluetoothService(
 
     private var mConnectedThread: ConnectedThread? = null
 
+    var m_myUUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    var m_bluetoothSocket: BluetoothSocket? = null
+    lateinit var m_progress: ProgressDialog
+    lateinit var m_bluetoothAdapter: BluetoothAdapter
+    var m_isConnected: Boolean = false
+
     @Synchronized
     fun stop() {
 
         if (mConnectedThread != null) {
             mConnectedThread!!.cancel()
             mConnectedThread = null
+        }
+    }
+
+    fun disconnect() {
+        if (m_bluetoothSocket != null) {
+            try {
+                m_bluetoothSocket?.close()
+                m_bluetoothSocket = null
+                m_isConnected = false
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+        //finish()
+    }
+
+    inner class ConnectToDevice(val c: Context, val address: String) : AsyncTask<Void, Void, String>() {
+        private var connectSuccess: Boolean = true
+
+        override fun onPreExecute() {
+            super.onPreExecute()
+            m_progress = ProgressDialog.show(c, "Connecting...", "please wait")
+        }
+
+        override fun doInBackground(vararg p0: Void?): String? {
+            try {
+                if (m_bluetoothSocket == null || !m_isConnected) {
+                    m_bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                    val device = m_bluetoothAdapter.getRemoteDevice(address)
+                    m_bluetoothSocket = device.createInsecureRfcommSocketToServiceRecord(m_myUUID)
+                    m_bluetoothAdapter.cancelDiscovery()
+                    m_bluetoothSocket?.connect()
+                }
+            } catch (e: IOException) {
+                m_bluetoothSocket?.close()
+                connectSuccess = false
+                e.printStackTrace()
+            }
+            return null
+        }
+
+        override fun onPostExecute(result: String?) {
+            super.onPostExecute(result)
+            if (!connectSuccess) {
+                Log.i("data", "couldn't connect")
+            } else {
+                m_isConnected = true
+            }
+            m_progress.dismiss()
+            connected(m_bluetoothSocket!!)
         }
     }
 
