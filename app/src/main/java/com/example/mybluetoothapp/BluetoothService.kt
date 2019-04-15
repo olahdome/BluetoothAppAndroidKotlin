@@ -20,6 +20,7 @@ import android.app.ProgressDialog
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.os.AsyncTask
+import org.greenrobot.eventbus.EventBus
 import java.util.*
 
 
@@ -27,7 +28,7 @@ private const val TAG = "MY_APP_DEBUG_TAG"
 
 class BluetoothService(
     // handler that gets info from Bluetooth service
-    private val handler: Handler
+    //private val handler: Handler
 ) {
 
     private var mConnectedThread: ConnectedThread? = null
@@ -58,6 +59,18 @@ class BluetoothService(
             }
         }
         //finish()
+    }
+
+    fun write(out: ByteArray) {
+        // Create temporary object
+        val r: ConnectedThread
+        // Synchronize a copy of the ConnectedThread
+        synchronized(this) {
+            //if (mState !== STATE_CONNECTED) return
+            r = mConnectedThread!!
+        }
+        // Perform the write unsynchronized
+        r.write(out)
     }
 
     inner class ConnectToDevice(val c: Context, val address: String) : AsyncTask<Void, Void, String>() {
@@ -117,10 +130,12 @@ class BluetoothService(
                 }
 
                 // Send the obtained bytes to the UI activity.
-                val readMsg = handler.obtainMessage(
+                /*val readMsg = handler.obtainMessage(
                     MESSAGE_READ, numBytes, -1,
                     mmBuffer)
-                readMsg.sendToTarget()
+                readMsg.sendToTarget()*/
+
+                EventBus.getDefault().post(DataEvent(mmBuffer.toString(), numBytes))
             }
         }
 
@@ -132,19 +147,19 @@ class BluetoothService(
                 Log.e(TAG, "Error occurred when sending data", e)
 
                 // Send a failure message back to the activity.
-                val writeErrorMsg = handler.obtainMessage(MESSAGE_TOAST)
+                /*val writeErrorMsg = handler.obtainMessage(MESSAGE_TOAST)
                 val bundle = Bundle().apply {
                     putString("toast", "Couldn't send data to the other device")
                 }
                 writeErrorMsg.data = bundle
-                handler.sendMessage(writeErrorMsg)
+                handler.sendMessage(writeErrorMsg)*/
                 return
             }
 
             // Share the sent message with the UI activity.
-            val writtenMsg = handler.obtainMessage(
+            /*val writtenMsg = handler.obtainMessage(
                 MESSAGE_WRITE, -1, -1, mmBuffer)
-            writtenMsg.sendToTarget()
+            writtenMsg.sendToTarget()*/
         }
 
         // Call this method from the main activity to shut down the connection.

@@ -1,27 +1,11 @@
 package com.example.mybluetoothapp
 
-import android.app.ProgressDialog
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
-import android.content.Context
-import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import java.util.*
-import android.bluetooth.BluetoothSocket
-import android.util.Log
 import kotlinx.android.synthetic.main.activity_control.*
-import org.jetbrains.anko.toast
-import java.io.IOException
-import android.widget.Toast
-import android.provider.Settings.Global.DEVICE_NAME
-import android.media.session.PlaybackState.STATE_NONE
-import android.os.Handler
-import android.os.Message
-import android.text.method.TextKeyListener.clear
-import android.support.v4.app.FragmentActivity
 import android.text.Editable
-import android.widget.EditText
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
 
 
 class ControlActivity: AppCompatActivity() {
@@ -33,6 +17,8 @@ class ControlActivity: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
         setContentView(R.layout.activity_control)
         m_address = intent.getStringExtra(SelectDeviceActivity.EXTRA_ADDRESS)
 
@@ -43,25 +29,58 @@ class ControlActivity: AppCompatActivity() {
 
         m_bluetoothService?.ConnectToDevice(this, m_address)?.execute()
 
+        control_led_on.setOnClickListener { sendMessage(readEditText.text) }
         //control_led_on.setOnClickListener { sendCommand("a") }
+
         //control_led_off.setOnClickListener { sendCommand("b") }
         control_led_disconnect.setOnClickListener { m_bluetoothService?.disconnect() }
     }
 
+    override fun onStart() {
+        super.onStart()
+        EventBus.getDefault().register(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        EventBus.getDefault().unregister(this)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+
+
         if(m_bluetoothService != null)
         {
             m_bluetoothService!!.stop()
         }
-
         m_bluetoothService?.disconnect()
         finish()
     }
 
     fun setupBluetooth(){
-        m_bluetoothService = BluetoothService(m_handler)
+        m_bluetoothService = BluetoothService()
     }
+
+    @Subscribe
+    fun onMessageEvent(event: DataEvent) {
+        readDataTV.text = event.data
+        readNumberOfBytesTV.text = event.dataNumberOfBytes.toString()
+    }
+
+    private fun sendMessage(message: Editable){
+        /*if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
+            Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show()
+            return
+        }*/
+        val stringMessage = message.toString()
+        if (stringMessage.isNotEmpty()) {
+            // Get the message bytes and tell the BluetoothChatService to write
+            val send = stringMessage.toByteArray()
+            m_bluetoothService?.write(send)
+        }
+    }
+
 /*
         control_send_butt.setOnClickListener { sendText() }
         control_disconnect_butt.setOnClickListener { disconnect() }
@@ -86,7 +105,7 @@ class ControlActivity: AppCompatActivity() {
                 e.printStackTrace()
             }
         }
-    }*/
+    }
 
     private val m_handler = object : Handler() {
         override fun handleMessage(msg: Message) {
@@ -105,6 +124,6 @@ class ControlActivity: AppCompatActivity() {
                 }
             }
         }
-    }
+    }*/
 
 }
