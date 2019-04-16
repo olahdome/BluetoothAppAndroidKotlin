@@ -120,6 +120,11 @@ class BluetoothService(
             var numBytes: Int // bytes returned from read()
 
             // Keep listening to the InputStream until an exception occurs.
+
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!44
+            // itt a BAJ!!!!!!!!!!!! megegyszer lefut, ha van adat, ha nincs, így kitörli, ha nincs adat
+            // MEGOLDANI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
             while (true) {
                 // Read from the InputStream.
                 numBytes = try {
@@ -135,7 +140,9 @@ class BluetoothService(
                     mmBuffer)
                 readMsg.sendToTarget()*/
 
-                EventBus.getDefault().post(DataEvent(mmBuffer.toString(), numBytes))
+                val message = String(mmBuffer,0,numBytes)
+
+                EventBus.getDefault().post(DataEvent(message, numBytes))
             }
         }
 
