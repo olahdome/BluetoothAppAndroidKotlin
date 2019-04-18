@@ -12,10 +12,9 @@ import java.io.InputStream
 import java.io.OutputStream
 import android.provider.Settings.Global.DEVICE_NAME
 import android.R.attr.start
-import android.R.string.cancel
+import android.R.string.*
 import android.bluetooth.BluetoothDevice
 import android.media.session.PlaybackState.STATE_NONE
-import android.R.string.cancel
 import android.app.ProgressDialog
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
@@ -49,6 +48,7 @@ class BluetoothService(
     }
 
     fun disconnect() {
+        write("STOP_DATA".toByteArray())
         if (m_bluetoothSocket != null) {
             try {
                 m_bluetoothSocket?.close()
@@ -114,7 +114,9 @@ class BluetoothService(
 
         private val mmInStream: InputStream = mmSocket!!.inputStream
         private val mmOutStream: OutputStream = mmSocket!!.outputStream
-        private val mmBuffer: ByteArray = ByteArray(1024) // mmBuffer store for the stream
+        private var mmBuffer: ByteArray = ByteArray(1024) // mmBuffer store for the stream
+        private var newMessage: String? = null
+        private var oldMessage: String? = null
 
         override fun run() {
             var numBytes: Int // bytes returned from read()
@@ -127,6 +129,8 @@ class BluetoothService(
 
             while (true) {
                 // Read from the InputStream.
+                oldMessage = newMessage
+
                 numBytes = try {
                     mmInStream.read(mmBuffer)
                 } catch (e: IOException) {
@@ -140,9 +144,13 @@ class BluetoothService(
                     mmBuffer)
                 readMsg.sendToTarget()*/
 
-                val message = String(mmBuffer,0,numBytes)
+                newMessage = String(mmBuffer,0,numBytes)
 
-                EventBus.getDefault().post(DataEvent(message, numBytes))
+                /*if (newMessage!!.contains("SEND_DATA;")) {
+                    newMessage!!.replace("SEND_DATA","")
+                }*/
+
+                EventBus.getDefault().post(DataEvent(newMessage!!, numBytes))
             }
         }
 

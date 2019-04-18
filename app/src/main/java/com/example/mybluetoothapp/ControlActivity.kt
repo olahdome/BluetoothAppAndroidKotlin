@@ -3,9 +3,10 @@ package com.example.mybluetoothapp
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_control.*
-import android.text.Editable
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
+import java.lang.Double.parseDouble
+import java.lang.NumberFormatException
 
 
 class ControlActivity: AppCompatActivity() {
@@ -13,6 +14,7 @@ class ControlActivity: AppCompatActivity() {
     companion object {
         lateinit var m_address: String
         var m_bluetoothService: BluetoothService? = null
+        var data: String? = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,7 +31,7 @@ class ControlActivity: AppCompatActivity() {
 
         m_bluetoothService?.ConnectToDevice(this, m_address)?.execute()
 
-        control_led_on.setOnClickListener { sendMessage(readEditText.text) }
+        control_led_on.setOnClickListener { sendMessage(readEditText.text.toString()) }
         //control_led_on.setOnClickListener { sendCommand("a") }
 
         //control_led_off.setOnClickListener { sendCommand("b") }
@@ -58,25 +60,37 @@ class ControlActivity: AppCompatActivity() {
         finish()
     }
 
-    fun setupBluetooth(){
+    private fun setupBluetooth(){
         m_bluetoothService = BluetoothService()
     }
 
     @Subscribe
     fun onMessageEvent(event: DataEvent) {
+        /*var numeric = true
+        if (event.data[event.data.lastIndex] == ';')
+        {
+            try {
+                val doubleData = parseDouble(event.data)
+            } catch (e: NumberFormatException) {
+                numeric = false
+            }
+            if (numeric) {
+            }
+        }*/
+        //sendMessage("SEND_DATA;")
+
         readDataTV.text = event.data
         readNumberOfBytesTV.text = event.dataNumberOfBytes.toString()
     }
 
-    private fun sendMessage(message: Editable){
+    private fun sendMessage(message: String){
         /*if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
             Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show()
             return
         }*/
-        val stringMessage = message.toString()
-        if (stringMessage.isNotEmpty()) {
+        if (message.isNotEmpty()) {
             // Get the message bytes and tell the BluetoothChatService to write
-            val send = stringMessage.toByteArray()
+            val send = message.toByteArray()
             m_bluetoothService?.write(send)
         }
     }
